@@ -33,9 +33,379 @@
     border: 2px solid var(--border);
     background: var(--bg);
   }
+#app { display: flex; flex-direction: column; overflow: hidden; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #app input, #app textarea { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; padding: 8px 10px; font: inherit; }
+  #app input:focus, #app textarea:focus { outline: 2px solid #fff; outline-offset: 1px; }
+  #app button { background: transparent; color: #fff; border: 1px solid #fff; border-radius: 6px; padding: 8px 12px; font: inherit; cursor: pointer; }
+  #app button:hover { background: #fff; color: #000432; }
+  #app button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .addbar { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.25); }
+  .addbar input { flex: 1; min-width: 0; }
+  #sections { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .section { border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; overflow-x: auto; }
+  .section-head { display: contents; }
+  .section-head input { order: 1; flex: 0 0 160px; min-width: 0; font-weight: 700; font-size: 1.05rem; }
+    .s-del { order: 6; flex: none; white-space: nowrap; }
+  .section textarea { order: 2; flex: 1 1 180px; min-width: 120px; height: 40px; min-height: 40px; resize: vertical; }
+    .s-email, .s-mobile { order: 2; flex: 0 1 200px; min-width: 120px; }
+  .files { order: 3; flex: 2 1 260px; min-width: 0; display: flex; flex-direction: row; align-items: center; gap: 6px; overflow-x: auto; }
+    .file { flex: none; }
+  .file { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; }
+  .file a { flex: none; max-width: 140px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file small { opacity: 0.7; flex: none; }
+    .file { flex-wrap: nowrap; }
+    .file button { flex: none; white-space: nowrap; padding: 6px 10px; }
+    .file .file-rename { flex: 1; min-width: 0; }
+  .file-actions { display: contents; }
+    .files { flex-wrap: wrap; overflow: visible; }
+    .file { padding: 4px 8px; gap: 6px; }
+    .file small { display: none; }
+    .file a { max-width: 160px; }
+    .file .icon-btn { padding: 5px 7px; line-height: 0; }
+    .file .file-rename { flex: none; width: 140px; }
+    .s-del { display: none; }
+    .s-add-file { order: 4; flex: none; white-space: nowrap; }
+    .s-status:empty { display: none; }
+      .s-add-file { display: none; }
+      .section.editing .s-add-file { display: inline-block; }
+      .s-edit { order: 7; flex: none; padding: 5px 7px; line-height: 0; }
+      .section.editing .s-edit { background: #fff; color: #000432; }
+  .s-status { order: 5; flex: none; white-space: nowrap; opacity: 0.8; font-size: 0.85rem; }
+  .empty { opacity: 0.7; padding: 24px; text-align: center; }
+    .viewer { position: fixed; inset: 0; z-index: 200; background: rgba(0,4,50,0.95); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .viewer[hidden] { display: none; }
+    .viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #fff; }
+    .viewer-close { position: absolute; top: 12px; right: 12px; background: transparent; color: #fff; border: 1px solid #fff; border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; }
+    .viewer-close:hover { background: #fff; color: #000432; }
 </style>
 </head>
 <body>
-  <main id="app"></main>
-</body>
+  <main id="app">
+      <div id="sections"></div>
+            <div class="addbar">
+              <input id="new-header" type="text" placeholder="New header (e.g. Aadhar Card)" aria-label="New header">
+              <button id="add-header" type="button">Add header</button>
+            </div>
+          </main>
+  
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getDatabase, ref as dbRef, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+      const IMGBB_API_KEY = "c6cb2a9badd0a53af93636523c72211e";
+  
+      const firebaseConfig = {
+        apiKey: "AIzaSyAYHA8Qw3Qw3Qzbyg8MtjrSKcJusNi4VaA6V4",
+        authDomain: "system-data-bf026.firebaseapp.com",
+        databaseURL: "https://system-data-bf026-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "system-data-bf026",
+        storageBucket: "system-data-bf026.firebasestorage.app",
+        messagingSenderId: "718302899022",
+        appId: "1:718302899022:web:f1675dbcc293e138c68c1f"
+      };
+  
+      const fbApp = initializeApp(firebaseConfig);
+      const db = getDatabase(fbApp);
+      const IMGBB_UPLOAD = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
+      const ROOT = "organiser";
+  
+      window.fileSync = {
+        uploadFile: (file, folder, onProgress) => new Promise((resolve, reject) => {
+          const metaRef = push(dbRef(db, `${ROOT}/files`));
+          const id = metaRef.key;
+          const form = new FormData();
+                    form.append("image", file);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("POST", IMGBB_UPLOAD);
+                    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded / e.total); };
+                    xhr.onerror = () => reject(new Error("Network error during upload"));
+                    xhr.onload = async () => {
+                      try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (!res.success) throw new Error("ImgBB upload failed");
+                        const url = res.data.url;
+                        const record = { id, name: file.name, size: file.size, type: file.type || "", url, path: "", folder: folder || "", created: Date.now() };
+                        await set(metaRef, record);
+                        resolve(record);
+                      } catch (err) { reject(err); }
+                    };
+                    xhr.send(form);
+        }),
+  
+        listenFiles: (callback) => onValue(dbRef(db, `${ROOT}/files`), (snap) => {
+          const data = snap.val() || {};
+          callback(Object.values(data).sort((a, b) => b.created - a.created));
+        }),
+  
+        renameFile: (id, name) => update(dbRef(db, `${ROOT}/files/${id}`), { name }),
+  
+        moveFile: (id, folder) => update(dbRef(db, `${ROOT}/files/${id}`), { folder }),
+  
+        deleteFile: async (record) => {
+          if (!record || !record.id) return;
+          await remove(dbRef(db, `${ROOT}/files/${record.id}`));
+        }
+      };
+    const sectionsEl = document.getElementById("sections");
+        const newHeaderEl = document.getElementById("new-header");
+        const SECTIONS = `${ROOT}/sections`;
+        const els = {};
+        let sectionsData = {};
+        let filesData = [];
+    
+        const emptyEl = document.createElement("div");
+        emptyEl.className = "empty";
+        emptyEl.textContent = "No headers yet. Add one below.";
+        sectionsEl.appendChild(emptyEl);
+    
+        const viewer = document.createElement("div");
+            viewer.className = "viewer";
+            viewer.hidden = true;
+            viewer.innerHTML = `<button type="button" class="viewer-close" aria-label="Close">Close</button><img class="viewer-img" alt="">`;
+            document.body.appendChild(viewer);
+            const viewerImg = viewer.querySelector(".viewer-img");
+        
+            function closeViewer() {
+              viewer.hidden = true;
+              viewerImg.removeAttribute("src");
+            }
+            viewer.addEventListener("click", (e) => { if (e.target !== viewerImg) closeViewer(); });
+            document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !viewer.hidden) closeViewer(); });
+        
+            function openViewer(f) {
+              const imgExt = /\.(jpe?g|png|gif|webp|svg|avif|bmp)(\?|$)/i;
+              const isImg = (f.type || "").startsWith("image/") || imgExt.test(f.url || "") || imgExt.test(f.name || "");
+              if (!isImg) { window.open(f.url, "_blank", "noopener"); return; }
+              viewerImg.src = f.url;
+              viewerImg.alt = f.name || "";
+              viewer.hidden = false;
+            }
+        
+            function fmtSize(n) {
+          if (n < 1024) return `${n} B`;
+          if (n < 1048576) return `${(n / 1024).toFixed(1)} KB`;
+          return `${(n / 1048576).toFixed(1)} MB`;
+        }
+    
+        async function downloadFile(f) {
+                  var handle = null;
+                  if (window.showSaveFilePicker) {
+                    try {
+                      handle = await window.showSaveFilePicker({ suggestedName: f.name || "file" });
+                    } catch (err) {
+                      if (err && err.name === "AbortError") return;
+                      handle = null;
+                    }
+                  }
+                  try {
+                    var res = await fetch(f.url);
+                    var blob = await res.blob();
+                                if (handle) {
+                                  var writable = await handle.createWritable();
+                                  await writable.write(blob);
+                                  await writable.close();
+                                  return;
+                                }
+                    var objUrl = URL.createObjectURL(blob);
+                    var link = document.createElement("a");
+                    link.href = objUrl;
+                    link.download = f.name || "file";
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(function () { URL.revokeObjectURL(objUrl); }, 1000);
+                  } catch (err) {
+                    console.error(err);
+                    window.open(f.url, "_blank", "noopener");
+                  }
+                }
+        
+                function buildSection(id) {
+          const box = document.createElement("section");
+          box.className = "section";
+          box.innerHTML = `
+            <div class="section-head">
+              <input class="s-title" type="text" aria-label="Header">
+              <button type="button" class="s-del">Delete</button>
+            </div>
+            <textarea class="s-details" placeholder="Write details here" aria-label="Details"></textarea>
+                        <input class="s-email" type="email" placeholder="Email" aria-label="Email">
+                        <input class="s-mobile" type="tel" placeholder="Mobile number" aria-label="Mobile number">
+            <div class="files"></div>
+            <div class="file-actions"><button type="button" class="s-add-file">Add files</button><span class="s-status"></span><button type="button" class="s-edit" title="Add files" aria-label="Add files"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+            <input class="s-picker" type="file" multiple hidden>`;
+          const r = {
+            box,
+            title: box.querySelector(".s-title"),
+            details: box.querySelector(".s-details"),
+                        email: box.querySelector(".s-email"),
+                        mobile: box.querySelector(".s-mobile"),
+            files: box.querySelector(".files"),
+            status: box.querySelector(".s-status"),
+            picker: box.querySelector(".s-picker")
+          };
+          const secRef = dbRef(db, `${SECTIONS}/${id}`);
+          let timer = null;
+          let gone = false;
+    
+          const saveDetails = () => {
+            clearTimeout(timer);
+            if (gone) return;
+            update(secRef, { details: r.details.value }).catch(console.error);
+          };
+          r.title.addEventListener("change", () => {
+            const t = r.title.value.trim();
+            if (t) { update(secRef, { title: t }).catch(console.error); }
+            else { r.title.value = (sectionsData[id] && sectionsData[id].title) || ""; }
+          });
+          r.details.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(saveDetails, 500); });
+          r.details.addEventListener("blur", saveDetails);
+                    r.email.addEventListener("change", () => { if (!gone) update(secRef, { email: r.email.value.trim() }).catch(console.error); });
+                    r.mobile.addEventListener("change", () => { if (!gone) update(secRef, { mobile: r.mobile.value.trim() }).catch(console.error); });
+    
+          box.querySelector(".s-add-file").addEventListener("click", () => r.picker.click());
+                    box.querySelector(".s-edit").addEventListener("click", () => { box.classList.toggle("editing"); });
+          r.picker.addEventListener("change", async () => {
+            const list = Array.from(r.picker.files);
+            r.picker.value = "";
+            let failed = "";
+            for (const f of list) {
+              try {
+                await window.fileSync.uploadFile(f, id, (p) => { r.status.textContent = `Uploading ${f.name} ${Math.round(p * 100)}%`; });
+              } catch (err) {
+                console.error(err);
+                failed = f.name;
+              }
+            }
+            r.status.textContent = failed ? `Upload failed: ${failed}` : "";
+          });
+    
+          const delBtn = box.querySelector(".s-del");
+          let armed = false;
+          delBtn.addEventListener("click", async () => {
+            if (!armed) {
+              armed = true;
+              delBtn.textContent = "Tap again to delete";
+              setTimeout(() => { armed = false; delBtn.textContent = "Delete"; }, 3000);
+              return;
+            }
+            gone = true;
+            clearTimeout(timer);
+            try {
+              const mine = filesData.filter((f) => f.folder === id);
+              for (const f of mine) { await window.fileSync.deleteFile(f); }
+              await remove(secRef);
+            } catch (err) {
+              gone = false;
+              armed = false;
+              delBtn.textContent = "Delete";
+              r.status.textContent = "Delete failed. Try again.";
+              console.error(err);
+            }
+          });
+          return r;
+        }
+    
+        function renderFiles(r, id) {
+          r.files.textContent = "";
+          filesData.filter((f) => f.folder === id).forEach((f) => {
+            const row = document.createElement("div");
+            row.className = "file";
+            const a = document.createElement("a");
+            a.href = f.url;
+            a.target = "_blank";
+            a.rel = "noopener";
+                        a.addEventListener("click", (e) => { e.preventDefault(); openViewer(f); });
+            a.textContent = f.name;
+            const small = document.createElement("small");
+            small.textContent = fmtSize(f.size || 0);
+            const del = document.createElement("button");
+            del.type = "button";
+            del.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>`;
+                        del.title = "Remove";
+                        del.setAttribute("aria-label", "Remove");
+                        del.className = "icon-btn";
+            del.addEventListener("click", async () => {
+              try { await window.fileSync.deleteFile(f); }
+              catch (err) { console.error(err); r.status.textContent = `Could not remove ${f.name}`; }
+            });
+            const view = document.createElement("button");
+                        view.type = "button";
+                        view.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+                                                view.title = "Download";
+                                                view.setAttribute("aria-label", "Download");
+                                                view.className = "icon-btn";
+                        view.addEventListener("click", () => downloadFile(f));
+                        const ren = document.createElement("button");
+                        ren.type = "button";
+                        ren.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+                                                ren.title = "Rename";
+                                                ren.setAttribute("aria-label", "Rename");
+                                                ren.className = "icon-btn";
+                        ren.addEventListener("click", () => {
+                          const inp = document.createElement("input");
+                          inp.type = "text";
+                          inp.value = f.name;
+                          inp.className = "file-rename";
+                          inp.setAttribute("aria-label", "File name");
+                          a.replaceWith(inp);
+                          inp.focus();
+                          inp.select();
+                          let done = false;
+                          const finish = async (save) => {
+                            if (done) return;
+                            done = true;
+                            const nm = inp.value.trim();
+                            if (save && nm && nm !== f.name) {
+                              try { await window.fileSync.renameFile(f.id, nm); }
+                              catch (err) { console.error(err); r.status.textContent = `Could not rename ${f.name}`; }
+                            }
+                            inp.replaceWith(a);
+                          };
+                          inp.addEventListener("keydown", (e) => {
+                            if (e.key === "Enter") finish(true);
+                            if (e.key === "Escape") finish(false);
+                          });
+                          inp.addEventListener("blur", () => finish(true));
+                        });
+                        row.append(a, small, ren, view, del);
+            r.files.appendChild(row);
+          });
+        }
+    
+        function render() {
+          const ids = Object.keys(sectionsData).sort((a, b) => (sectionsData[a].created || 0) - (sectionsData[b].created || 0));
+          Object.keys(els).forEach((id) => {
+            if (!sectionsData[id]) { els[id].box.remove(); delete els[id]; }
+          });
+          emptyEl.hidden = ids.length > 0;
+          ids.forEach((id) => {
+            if (!els[id]) { els[id] = buildSection(id); sectionsEl.appendChild(els[id].box); }
+            const r = els[id];
+            const s = sectionsData[id];
+            if (document.activeElement !== r.title) r.title.value = s.title || "";
+            if (document.activeElement !== r.details) r.details.value = s.details || "";
+                        if (document.activeElement !== r.email) r.email.value = s.email || "";
+                        if (document.activeElement !== r.mobile) r.mobile.value = s.mobile || "";
+            renderFiles(r, id);
+          });
+        }
+    
+        async function addHeader() {
+          const title = newHeaderEl.value.trim();
+          if (!title) return;
+          newHeaderEl.value = "";
+          try {
+            await set(push(dbRef(db, SECTIONS)), { title, details: "", created: Date.now() });
+          } catch (err) {
+            console.error(err);
+            newHeaderEl.value = title;
+          }
+        }
+        document.getElementById("add-header").addEventListener("click", addHeader);
+        newHeaderEl.addEventListener("keydown", (e) => { if (e.key === "Enter") addHeader(); });
+    
+        onValue(dbRef(db, SECTIONS), (snap) => { sectionsData = snap.val() || {}; render(); });
+        window.fileSync.listenFiles((list) => { filesData = list; render(); });
+      </script>
+    </body>
 </html>
