@@ -75,6 +75,19 @@
       .section.editing .s-add-file { display: inline-block; }
       .s-edit { order: 7; flex: none; padding: 5px 7px; line-height: 0; }
       .section.editing .s-edit { background: #fff; color: #000432; }
+        .s-lock { order: 6; flex: none; white-space: nowrap; display: none; }
+        .section.editing .s-lock { display: inline-block; }
+        .s-details { order: 2; flex: 1 1 180px; min-width: 120px; height: 40px; min-height: 40px; overflow-y: auto; resize: vertical; white-space: pre-wrap; word-break: break-word; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; padding: 8px 10px; font: inherit; line-height: 1.3; }
+          .s-details:focus { outline: 2px solid #fff; outline-offset: 1px; }
+          .s-details:empty::before { content: attr(data-ph); opacity: 0.5; }
+          .s-details .g { color: #4ade80; }
+          .s-col { order: 2; }
+            .section-head .s-col { order: 1; }
+            #app .s-col { flex: none; width: 14px; height: 14px; min-width: 14px; padding: 0; border-radius: 50%; }
+            #app .s-col[data-c="g"] { background: #4ade80; border-color: #4ade80; }
+            #app .s-col[data-c="r"] { background: #ff5a5a; border-color: #ff5a5a; }
+            #app [data-c="g"] { color: #4ade80; }
+            #app [data-c="r"] { color: #ff5a5a; }
   .s-status { order: 5; flex: none; white-space: nowrap; opacity: 0.8; font-size: 0.85rem; }
   .empty { opacity: 0.7; padding: 24px; text-align: center; }
     .viewer { position: fixed; inset: 0; z-index: 200; background: rgba(0,4,50,0.95); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -224,19 +237,61 @@
                   }
                 }
         
-                function buildSection(id) {
+                function cleanHtml(html) {
+                          var tpl = document.createElement("template");
+                          tpl.innerHTML = html || "";
+                          var wrap = document.createElement("div");
+                          var walk = function (node, out) {
+                            node.childNodes.forEach(function (n) {
+                              if (n.nodeType === 3) {
+                                out.appendChild(document.createTextNode(n.nodeValue));
+                              } else if (n.nodeType === 1) {
+                                var tag = n.tagName;
+                                var target = out;
+                                if (tag === "BR") {
+                                  var pt = n.parentNode ? n.parentNode.tagName : "";
+                                  if ((pt === "DIV" || pt === "P") && n.parentNode.childNodes.length === 1) { return; }
+                                  out.appendChild(document.createElement("br"));
+                                  return;
+                                }
+                                if ((tag === "SPAN" || tag === "FONT") && (/74,\s*222,\s*128/.test((n.style && n.style.color) || "") || (n.getAttribute("color") || "").toLowerCase() === "#4ade80")) {
+                                  target = document.createElement("span");
+                                  target.className = "g";
+                                  out.appendChild(target);
+                                } else if ((tag === "DIV" || tag === "P") && out.lastChild) {
+                                  out.appendChild(document.createElement("br"));
+                                }
+                                walk(n, target);
+                              }
+                            });
+                          };
+                          walk(tpl.content, wrap);
+                          return wrap.innerHTML;
+                        }
+                
+                        function detailsPayload(el) {
+                          var txt = (el.innerText || "").replace(/\u00a0/g, " ");
+                          if (!txt.trim()) { return { details: "", detailsHtml: "" }; }
+                          return { details: txt, detailsHtml: cleanHtml(el.innerHTML) };
+                        }
+                
+                        function buildSection(id) {
           const box = document.createElement("section");
           box.className = "section";
           box.innerHTML = `
             <div class="section-head">
               <input class="s-title" type="text" aria-label="Header">
+                            <button type="button" class="s-col" data-f="title" title="Text color: green / red / none" aria-label="Text color"></button>
               <button type="button" class="s-del">Delete</button>
             </div>
-            <textarea class="s-details" placeholder="Write details here" aria-label="Details"></textarea>
+            <div class="s-details" contenteditable="true" role="textbox" data-ph="Write details here" aria-label="Details"></div>
+                        <button type="button" class="s-col" data-f="details" title="Text color: green / red / none" aria-label="Text color"></button>
                         <input class="s-email" type="email" placeholder="Email" aria-label="Email">
+                                    <button type="button" class="s-col" data-f="email" title="Text color: green / red / none" aria-label="Text color"></button>
                         <input class="s-mobile" type="tel" placeholder="Mobile number" aria-label="Mobile number">
+                                    <button type="button" class="s-col" data-f="mobile" title="Text color: green / red / none" aria-label="Text color"></button>
             <div class="files"></div>
-            <div class="file-actions"><button type="button" class="s-add-file">Add files</button><span class="s-status"></span><button type="button" class="s-edit" title="Edit" aria-label="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+            <div class="file-actions"><button type="button" class="s-add-file">Add files</button><span class="s-status"></span><button type="button" class="s-lock">Lock</button><button type="button" class="s-edit" title="Edit" aria-label="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
             <input class="s-picker" type="file" multiple hidden>`;
           const r = {
             box,
@@ -244,6 +299,8 @@
             details: box.querySelector(".s-details"),
                         email: box.querySelector(".s-email"),
                         mobile: box.querySelector(".s-mobile"),
+                                    lock: box.querySelector(".s-lock"),
+                                                dots: box.querySelectorAll(".s-col"),
             files: box.querySelector(".files"),
             status: box.querySelector(".s-status"),
             picker: box.querySelector(".s-picker")
@@ -255,7 +312,7 @@
           const saveDetails = () => {
             clearTimeout(timer);
             if (gone) return;
-            update(secRef, { details: r.details.value }).catch(console.error);
+            update(secRef, detailsPayload(r.details)).catch(console.error);
           };
           r.title.addEventListener("change", () => {
             const t = r.title.value.trim();
@@ -264,11 +321,20 @@
           });
           r.details.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(saveDetails, 500); });
           r.details.addEventListener("blur", saveDetails);
+                    r.details.addEventListener("input", () => { if (!r.details.textContent) { r.details.innerHTML = ""; } });
+                    r.details.addEventListener("paste", (e) => { e.preventDefault(); var pasted = (e.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, pasted); });
+                    r.dots.forEach((b) => {
+                                b.addEventListener("click", () => {
+                                  var cur = (sectionsData[id] && sectionsData[id].colors && sectionsData[id].colors[b.dataset.f]) || "";
+                                  update(secRef, { ["colors/" + b.dataset.f]: (cur === "g" ? "r" : (cur === "r" ? null : "g")) }).catch(console.error);
+                                });
+                              });
                     r.email.addEventListener("change", () => { if (!gone) update(secRef, { email: r.email.value.trim() }).catch(console.error); });
                     r.mobile.addEventListener("change", () => { if (!gone) update(secRef, { mobile: r.mobile.value.trim() }).catch(console.error); });
     
           box.querySelector(".s-add-file").addEventListener("click", () => r.picker.click());
                     box.querySelector(".s-edit").addEventListener("click", () => { box.classList.toggle("editing"); });
+                              r.lock.addEventListener("click", () => { update(secRef, { locked: !(sectionsData[id] && sectionsData[id].locked) }).catch(console.error); });
           r.picker.addEventListener("change", async () => {
             const list = Array.from(r.picker.files);
             r.picker.value = "";
@@ -388,9 +454,17 @@
             const r = els[id];
             const s = sectionsData[id];
             if (document.activeElement !== r.title) r.title.value = s.title || "";
-            if (document.activeElement !== r.details) r.details.value = s.details || "";
+            if (document.activeElement !== r.details) {
+                          if (s.detailsHtml != null) { r.details.innerHTML = cleanHtml(s.detailsHtml); }
+                          else { r.details.textContent = s.details || ""; }
+                        }
                         if (document.activeElement !== r.email) r.email.value = s.email || "";
                         if (document.activeElement !== r.mobile) r.mobile.value = s.mobile || "";
+                                    r.box.classList.toggle("locked", !!s.locked);
+                                    [r.title, r.email, r.mobile].forEach((x) => { x.readOnly = !!s.locked; });
+                                                r.details.contentEditable = s.locked ? "false" : "true";
+                                                r.dots.forEach((d) => { var c = (s.colors && s.colors[d.dataset.f]) || ""; d.dataset.c = c; r[d.dataset.f].dataset.c = c; });
+                                    r.lock.textContent = s.locked ? "Unlock" : "Lock";
             renderFiles(r, id);
           });
         }
