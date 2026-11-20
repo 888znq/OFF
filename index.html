@@ -133,6 +133,14 @@
                     #app .s-del { display: none; order: 9; margin-left: auto; flex: none; }
                       #app.del-mode .s-del { display: inline-block; }
                       #app #del-mode[aria-pressed="true"] { background: #ff5a5a; border-color: #ff5a5a; color: #fff; }
+                        #app #sections { padding: 6px; gap: 0; }
+                        #app .section { border: 0; padding: 0; gap: 0; border-radius: 0; }
+                        #app .section ~ .section { margin-top: -1px; }
+                        #app .cell:not(.c-title), #app .soft, #app .s-hard { margin-left: -1px; }
+                        #app .cell input, #app .c-details .s-details, #app .soft, #app .s-hard { border-radius: 0; }
+                        #app .cell input, #app .soft, #app .s-hard { height: 40px; }
+                        #app .s-hard { justify-content: flex-start; }
+                          #app .cell input, #app .c-details .s-details, #app .soft, #app .s-hard, #app .s-hard.on, #app .file { border-color: rgba(255,255,255,0.3) !important; }
                 #app .soft .soft-h span { display: none; }
                 #app .soft .s-add-file, #app .soft .file .icon-btn[title="Remove"] { display: inline-block; opacity: 0; pointer-events: none; }
                 #app .soft:hover .s-add-file, #app .soft:focus-within .s-add-file, #app .soft:hover .file .icon-btn[title="Remove"], #app .soft:focus-within .file .icon-btn[title="Remove"] { opacity: 1; pointer-events: auto; }
