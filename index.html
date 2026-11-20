@@ -122,8 +122,20 @@
           #app .soft .soft-h { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
           #app .soft .s-add-file { order: 0; width: 18px; height: 18px; padding: 0; }
           #app .soft .s-add-file::before { width: 12px; height: 12px; }
+            #app .soft { flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; height: 38px; padding: 0 24px 0 10px; }
+            #app .soft .soft-h { flex: none; font-size: 1rem; line-height: 1; letter-spacing: 0; text-transform: none; opacity: 0.6; justify-content: flex-start; }
+            #app .soft .files { flex: 1 1 0; width: auto; min-width: 0; }
       #app .s-hard { border-color: #ff5a5a; color: #ff5a5a; display: inline-flex; align-items: center; gap: 8px; }
         #app .s-hard::after { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+          #app .s-details { height: 40px; overflow: hidden; resize: none; white-space: pre; text-overflow: ellipsis; }
+          #app .c-details .s-details { height: 40px; padding: 0 22px 0 10px; line-height: 38px; overflow: hidden; white-space: pre; text-overflow: ellipsis; resize: none; cursor: pointer; }
+            #app .c-details[data-more] .s-details { padding-right: 44px; }
+            #app .c-details[data-more]::after { content: attr(data-more); position: absolute; right: 22px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; line-height: 1; padding: 2px 5px; border: 1px solid currentColor; border-radius: 8px; opacity: 0.8; pointer-events: none; z-index: 2; }
+            #app .c-details:focus-within::after { display: none; }
+              #app .c-details::after { display: none !important; }
+              #app .c-details[data-more] .s-details { padding-right: 22px; }
+              #app .c-details .s-details { text-overflow: clip; }
+            #app .c-details .s-details:focus { height: auto; min-height: 40px; max-height: 151px; padding: 7px 22px 7px 10px; line-height: 24px; overflow-x: auto; overflow-y: auto; white-space: pre; text-overflow: clip; cursor: text; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 23px, rgba(255,255,255,0.2) 23px, rgba(255,255,255,0.2) 24px); background-origin: content-box; background-clip: padding-box; background-attachment: local; }
         #app .s-hard.on { color: #4ade80; }
         #app .s-hard.on { border-color: #4ade80; }
       .files { flex: 1 1 0; min-width: 120px; overflow-x: hidden; scrollbar-width: none; }
@@ -329,7 +341,7 @@
                             <button type="button" class="s-col" data-f="title" title="Text color: green / red / none" aria-label="Text color"></button></div>
               <button type="button" class="s-del" title="Delete header (tap twice)" aria-label="Delete header">Delete</button>
             </div>
-            <div class="cell c-details"><div class="s-details" contenteditable="true" role="textbox" data-ph="Write details here" aria-label="Details"></div>
+            <div class="cell c-details"><div class="s-details" tabindex="0" contenteditable="true" role="textbox" data-ph="Write details here" aria-label="Details"></div>
                         <button type="button" class="s-col" data-f="details" title="Text color: green / red / none" aria-label="Text color"></button></div>
                         <div class="cell c-email"><input class="s-email" type="email" placeholder="Email" aria-label="Email">
                                     <button type="button" class="s-col" data-f="email" title="Text color: green / red / none" aria-label="Text color"></button></div>
@@ -534,6 +546,8 @@
                           else { r.details.textContent = s.details || ""; }
                         }
                         if (document.activeElement !== r.email) r.email.value = s.email || "";
+                                                var nLines = (s.details || "").split("\n").filter(function (x) { return x.trim(); }).length;
+                                                if (nLines > 1) { r.details.parentNode.dataset.more = "+" + (nLines - 1); } else { delete r.details.parentNode.dataset.more; }
                         if (document.activeElement !== r.mobile) r.mobile.value = s.mobile || "";
                                     r.box.classList.toggle("locked", !!s.locked);
                                     [r.title, r.email, r.mobile].forEach((x) => { x.readOnly = !!s.locked; });
