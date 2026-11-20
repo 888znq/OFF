@@ -64,8 +64,7 @@
     .file .icon-btn { padding: 3px; border: none; line-height: 0; }
       .file .icon-btn svg { width: 14px; height: 14px; }
         .file .icon-btn { display: none; }
-        .file:hover .icon-btn, .file:focus-within .icon-btn { display: inline-block; }
-        @media (hover: none) { .file .icon-btn { display: inline-block; } }
+        .section.editing .file .icon-btn { display: inline-block; }
     .file .file-rename { flex: none; width: 140px; }
     .s-del { display: none; }
       .section.editing .s-del { display: inline-block; }
@@ -83,7 +82,8 @@
           .s-details .g { color: #4ade80; }
           .s-col { order: 2; }
             .file .s-col { order: 0; }
-              .s-edit { display: none; }
+              .s-edit { display: inline-block; }
+                            #app .s-edit { width: 30px; height: 30px; padding: 0; }
                 #app .s-add-file, #app .s-lock, #app .s-del { font-size: 0; width: 30px; height: 30px; padding: 0; position: relative; }
                 .s-add-file::before, .s-lock::before, .s-del::before { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; background: currentColor; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: contain; mask-size: contain; }
                 .s-add-file::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E"); }
@@ -92,8 +92,7 @@
                 .s-del::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6'/%3E%3C/svg%3E"); }
                 #app .section.locked .s-lock { color: #4ade80; border-color: #4ade80; }
                 #app .s-del.armed { background: #ff5a5a; border-color: #ff5a5a; color: #fff; }
-              .section:hover .s-add-file, .section:hover .s-del, .section:hover .s-lock { display: inline-block; }
-              @media (hover: none) { .s-add-file, .s-del, .s-lock { display: inline-block; } }
+              .section.editing .s-add-file, .section.editing .s-del, .section.editing .s-lock { display: inline-block; }
             .section-head .s-col { order: 1; }
             #app .s-col { flex: none; width: 14px; height: 14px; min-width: 14px; padding: 0; border-radius: 50%; }
             #app .s-col[data-c="g"] { background: #4ade80; border-color: #4ade80; }
@@ -101,6 +100,10 @@
             #app [data-c="g"] { color: #4ade80; }
             #app [data-c="r"] { color: #ff5a5a; }
   .s-status { order: 5; flex: none; white-space: nowrap; opacity: 0.8; font-size: 0.85rem; }
+    .s-hard { order: 3; flex: none; white-space: nowrap; }
+      #app .s-hard.on { background: rgba(255,255,255,0.25); }
+      #app .s-col.s-hard-dot { order: 3; }
+    #app .s-hard:disabled { opacity: 0.6; cursor: default; }
   .empty { opacity: 0.7; padding: 24px; text-align: center; }
     .viewer { position: fixed; inset: 0; z-index: 200; background: rgba(0,4,50,0.95); display: flex; align-items: center; justify-content: center; padding: 16px; }
     .viewer[hidden] { display: none; }
@@ -305,6 +308,8 @@
                         <input class="s-mobile" type="tel" placeholder="Mobile number" aria-label="Mobile number">
                                     <button type="button" class="s-col" data-f="mobile" title="Text color: green / red / none" aria-label="Text color"></button>
             <div class="files"></div>
+                        <button type="button" class="s-hard" aria-pressed="false" title="Hard copy (on / off)" aria-label="Hard copy">Hard copy</button>
+                        <button type="button" class="s-col s-hard-dot" data-f="hard" title="Text color: green / red / none" aria-label="Text color"></button>
             <div class="file-actions"><button type="button" class="s-add-file" title="Add files" aria-label="Add files">Add files</button><span class="s-status"></span><button type="button" class="s-lock" title="Lock / unlock (read-only)" aria-label="Lock or unlock">Lock</button><button type="button" class="s-edit" title="Edit" aria-label="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
             <input class="s-picker" type="file" multiple hidden>`;
           const r = {
@@ -314,6 +319,7 @@
                         email: box.querySelector(".s-email"),
                         mobile: box.querySelector(".s-mobile"),
                                     lock: box.querySelector(".s-lock"),
+                                                                        hard: box.querySelector(".s-hard"),
                                                 dots: box.querySelectorAll(".s-col"),
             files: box.querySelector(".files"),
             status: box.querySelector(".s-status"),
@@ -345,6 +351,7 @@
                               });
                     r.email.addEventListener("change", () => { if (!gone) update(secRef, { email: r.email.value.trim() }).catch(console.error); });
                     r.mobile.addEventListener("change", () => { if (!gone) update(secRef, { mobile: r.mobile.value.trim() }).catch(console.error); });
+                                        r.hard.addEventListener("click", () => { if (gone) return; update(secRef, { hardCopy: !(sectionsData[id] && sectionsData[id].hardCopy) }).catch(console.error); });
     
           box.querySelector(".s-add-file").addEventListener("click", () => r.picker.click());
                     box.querySelector(".s-edit").addEventListener("click", () => { box.classList.toggle("editing"); });
@@ -489,6 +496,9 @@
                                                 r.details.contentEditable = s.locked ? "false" : "true";
                                                 r.dots.forEach((d) => { var c = (s.colors && s.colors[d.dataset.f]) || ""; d.dataset.c = c; r[d.dataset.f].dataset.c = c; });
                                     r.lock.textContent = s.locked ? "Unlock" : "Lock";
+                                                                        r.hard.classList.toggle("on", !!s.hardCopy);
+                                                                        r.hard.setAttribute("aria-pressed", s.hardCopy ? "true" : "false");
+                                                                        r.hard.disabled = !!s.locked;
             renderFiles(r, id);
           });
         }
