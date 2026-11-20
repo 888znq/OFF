@@ -556,7 +556,7 @@
                                     r.lock.textContent = s.locked ? "Unlock" : "Lock";
                                                                         r.hard.classList.toggle("on", !!s.hardCopy);
                                                                         r.hard.setAttribute("aria-pressed", s.hardCopy ? "true" : "false");
-                                                                        r.hard.disabled = !!s.locked;
+                                                                        r.hard.disabled = false;
             renderFiles(r, id);
           });
         }
