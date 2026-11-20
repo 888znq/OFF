@@ -125,6 +125,18 @@
             #app .soft { flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; height: 38px; padding: 0 24px 0 10px; }
             #app .soft .soft-h { flex: none; font-size: 1rem; line-height: 1; letter-spacing: 0; text-transform: none; opacity: 0.6; justify-content: flex-start; }
             #app .soft .files { flex: 1 1 0; width: auto; min-width: 0; }
+              #app .soft .s-edit { display: none !important; }
+                #app .file .icon-btn { padding: 2px; border: none; line-height: 0; }
+                #app .soft .file { height: 28px; padding: 0 6px; align-items: center; }
+                #app .soft .files { overflow-y: hidden; align-items: center; }
+                  #app .soft .soft-h { order: 8; margin-left: auto; }
+                #app .soft .soft-h span { display: none; }
+                #app .soft .s-add-file, #app .soft .file .icon-btn[title="Remove"] { display: inline-block; opacity: 0; pointer-events: none; }
+                #app .soft:hover .s-add-file, #app .soft:focus-within .s-add-file, #app .soft:hover .file .icon-btn[title="Remove"], #app .soft:focus-within .file .icon-btn[title="Remove"] { opacity: 1; pointer-events: auto; }
+                @media (hover: none) { #app .soft .s-add-file, #app .soft .file .icon-btn[title="Remove"] { opacity: 1; pointer-events: auto; } }
+                #app .soft .s-edit:hover { background: rgba(255,255,255,0.15); color: inherit; }
+                #app .section.editing .soft .s-edit { background: rgba(255,255,255,0.15); color: inherit; }
+              #app .file button[title="Rename"], #app .file button[title="Download"] { display: none !important; }
       #app .s-hard { border-color: #ff5a5a; color: #ff5a5a; display: inline-flex; align-items: center; gap: 8px; }
         #app .s-hard::after { content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
           #app .s-details { height: 40px; overflow: hidden; resize: none; white-space: pre; text-overflow: ellipsis; }
@@ -347,10 +359,10 @@
                                     <button type="button" class="s-col" data-f="email" title="Text color: green / red / none" aria-label="Text color"></button></div>
                         <div class="cell c-mobile"><input class="s-mobile" type="tel" placeholder="Mobile number" aria-label="Mobile number">
                                     <button type="button" class="s-col" data-f="mobile" title="Text color: green / red / none" aria-label="Text color"></button></div>
-            <div class="soft"><div class="soft-h"><span>Soft copy</span><button type="button" class="s-add-file" title="Add files" aria-label="Add files">Add files</button></div><div class="files"></div><button type="button" class="s-col" data-f="soft" title="Text color: green / red" aria-label="Text color"></button></div>
+            <div class="soft"><div class="soft-h"><span>Soft copy</span><button type="button" class="s-add-file" title="Add files" aria-label="Add files">Add files</button></div><div class="files"></div><button type="button" class="s-edit" title="Edit" aria-label="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button type="button" class="s-col" data-f="soft" title="Text color: green / red" aria-label="Text color"></button></div>
                         <button type="button" class="s-hard" aria-pressed="false" title="Hard copy (on / off)" aria-label="Hard copy">Hard copy</button>
                         
-            <div class="file-actions"><span class="s-status"></span><button type="button" class="s-lock" title="Lock / unlock (read-only)" aria-label="Lock or unlock">Lock</button><button type="button" class="s-edit" title="Edit" aria-label="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>
+            <div class="file-actions"><span class="s-status"></span></div>
             <input class="s-picker" type="file" multiple hidden>`;
           const r = {
             box,
@@ -358,7 +370,7 @@
             details: box.querySelector(".s-details"),
                         email: box.querySelector(".s-email"),
                         mobile: box.querySelector(".s-mobile"),
-                                    lock: box.querySelector(".s-lock"),
+                                    
                                                                         hard: box.querySelector(".s-hard"),
                                                                                                             soft: box.querySelector(".soft"),
                                                 dots: box.querySelectorAll(".s-col"),
@@ -411,7 +423,7 @@
     
           box.querySelector(".s-add-file").addEventListener("click", () => r.picker.click());
                     box.querySelector(".s-edit").addEventListener("click", () => { box.classList.toggle("editing"); });
-                              r.lock.addEventListener("click", () => { update(secRef, { locked: !(sectionsData[id] && sectionsData[id].locked) }).catch(console.error); });
+                              
           r.picker.addEventListener("change", async () => {
             const list = Array.from(r.picker.files);
             r.picker.value = "";
@@ -457,7 +469,7 @@
     
         function renderFiles(r, id) {
           r.files.textContent = "";
-          filesData.filter((f) => f.folder === id).forEach((f) => {
+          filesData.filter((f) => f.folder === id).sort((x, y) => (x.created || 0) - (y.created || 0)).forEach((f, fi) => {
             const row = document.createElement("div");
             row.className = "file";
             const a = document.createElement("a");
@@ -465,7 +477,7 @@
             a.target = "_blank";
             a.rel = "noopener";
                         a.addEventListener("click", (e) => { e.preventDefault(); openViewer(f); });
-            a.textContent = f.name;
+            a.textContent = String(fi + 1);
                         var dot = document.createElement("button");
                         dot.type = "button";
                         dot.className = "s-col";
@@ -550,10 +562,10 @@
                                                 if (nLines > 1) { r.details.parentNode.dataset.more = "+" + (nLines - 1); } else { delete r.details.parentNode.dataset.more; }
                         if (document.activeElement !== r.mobile) r.mobile.value = s.mobile || "";
                                     r.box.classList.toggle("locked", !!s.locked);
-                                    [r.title, r.email, r.mobile].forEach((x) => { x.readOnly = !!s.locked; });
-                                                r.details.contentEditable = s.locked ? "false" : "true";
+                                    [r.title, r.email, r.mobile].forEach((x) => { x.readOnly = false; });
+                                                r.details.contentEditable = "true";
                                                 r.dots.forEach((d) => { var c = (s.colors && s.colors[d.dataset.f]) || "r"; d.dataset.c = c; r[d.dataset.f].dataset.c = c; });
-                                    r.lock.textContent = s.locked ? "Unlock" : "Lock";
+                                    
                                                                         r.hard.classList.toggle("on", !!s.hardCopy);
                                                                         r.hard.setAttribute("aria-pressed", s.hardCopy ? "true" : "false");
                                                                         r.hard.disabled = false;
