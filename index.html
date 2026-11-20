@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Blank App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  html, body, #app, #app *, .viewer, .viewer * { font-family: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace !important; }
+</style>
 <style>
   :root {
     --bg: #000432;
@@ -141,6 +147,34 @@
                         #app .cell input, #app .soft, #app .s-hard { height: 40px; }
                         #app .s-hard { justify-content: flex-start; }
                           #app .cell input, #app .c-details .s-details, #app .soft, #app .s-hard, #app .s-hard.on, #app .file { border-color: rgba(255,255,255,0.3) !important; }
+                            #app { border: 0; }
+                            #app #sections { padding: 0; }
+                            #app .section { width: 100%; }
+                              #app .cell .s-title { flex: 0 0 240px; width: 240px; min-width: 240px; }
+                                #app .cell::before, #app .soft::before { content: ""; position: absolute; top: 0; bottom: 0; right: 22px; width: 1px; background: rgba(255,255,255,0.3); pointer-events: none; z-index: 1; }
+                                #app .s-hard::before { content: ""; order: 1; align-self: stretch; width: 1px; margin: -8px 0; background: rgba(255,255,255,0.3); }
+                                #app .s-hard::after { order: 2; }
+                                  #app .cell::before, #app .soft::before { right: 18px; }
+                                  #app .cell .s-col, #app .soft > .s-col { right: 5px; }
+                                  #app .cell input, #app .c-details .s-details { padding-right: 18px !important; }
+                                  #app .soft { padding-right: 20px; }
+                                  #app .s-hard { gap: 6px; padding-right: 8px; }
+                                    #app .cell::before, #app .soft::before { right: 16px !important; }
+                                    #app .cell .s-col, #app .soft > .s-col { right: 4px !important; }
+                                    #app .cell input, #app .c-details .s-details { padding-right: 20px !important; }
+                                    #app .soft { padding-right: 20px !important; }
+                                    #app .s-hard { gap: 6px !important; padding: 0 8px 0 10px !important; }
+                                    #app .s-hard::before { margin: 0 0 0 auto !important; height: 100%; }
+                                      #app .cell::before, #app .soft::before, #app .s-hard::before { display: none !important; }
+                                      #app .cell .s-col, #app .soft > .s-col, #app .file .s-col { background: transparent !important; border: 0 !important; border-radius: 0 !important; width: 14px; height: 14px; min-width: 14px; font-size: 0; line-height: 14px; }
+                                      #app .cell .s-col::before, #app .soft > .s-col::before, #app .file .s-col::before { content: "✕"; display: block; text-align: center; font-size: 13px; font-weight: 700; line-height: 14px; }
+                                      #app .cell .s-col[data-c="g"]::before, #app .soft > .s-col[data-c="g"]::before, #app .file .s-col[data-c="g"]::before { content: "✓"; }
+                                      #app .cell .s-col[data-c="g"], #app .soft > .s-col[data-c="g"], #app .file .s-col[data-c="g"] { color: #4ade80 !important; }
+                                      #app .cell .s-col[data-c="r"], #app .soft > .s-col[data-c="r"], #app .file .s-col[data-c="r"] { color: #ff5a5a !important; }
+                                      #app .s-hard::after { content: "✕"; width: auto; height: auto; border-radius: 0; background: none; font-weight: 700; line-height: 1; }
+                                      #app .s-hard::after { content: "✕" !important; width: auto !important; height: auto !important; min-width: 0 !important; border-radius: 0 !important; background: none !important; font-size: 13px !important; font-weight: 700 !important; line-height: 1 !important; }
+                                        #app .s-hard.on::after { content: "✓" !important; }
+                              #app .c-details .s-details { flex: 0 0 320px; width: 320px; min-width: 320px; }
                 #app .soft .soft-h span { display: none; }
                 #app .soft .s-add-file, #app .soft .file .icon-btn[title="Remove"] { display: inline-block; opacity: 0; pointer-events: none; }
                 #app .soft:hover .s-add-file, #app .soft:focus-within .s-add-file, #app .soft:hover .file .icon-btn[title="Remove"], #app .soft:focus-within .file .icon-btn[title="Remove"] { opacity: 1; pointer-events: auto; }
